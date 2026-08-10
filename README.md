@@ -1,15 +1,57 @@
-## Video Conferencing Platform
+# Video Conferencing Platform
 
-A simple video conferencing web application with secure authentication and real-time communication. Users can sign up/login using JWT-based authentication, access a dashboard, and join video rooms to connect with others.
+A full-stack video conferencing web application with secure authentication and real-time communication. Users can sign up/log in (or join instantly as a guest), land in a dashboard to create or join a room, preview their camera/mic in a lobby, and then connect for a live video call with in-call chat — all powered by WebRTC and Socket.IO.
 
-After logging in, users are redirected to a dashboard where they can enter or create a room. Once inside a room, the platform enables real-time video and audio communication using WebRTC, while Socket.IO handles signaling and user connections.
+## Pages & Flow
 
-### Key Features
+1. **Landing Page** – Marketing entry point ("Connect with your loved Ones") with options to **Join as Guest**, **Register**, or **Login**, plus a "Get Started" CTA.
+2. **Auth Page** – Combined Sign In / Sign Up form (username + password) with JWT-based authentication.
+3. **Home Page (Dashboard)** – Logged-in landing spot with a room code input to join/create a meeting, plus **History** and **Logout** in the nav bar.
+4. **Lobby Page** – Pre-call screen ("Enter into Lobby") where the user sets a display name and previews their camera before connecting.
+5. **Meeting Room** – Live video call screen with:
+   - Local + remote video feeds
+   - Call controls (camera toggle, mic toggle, end call)
+   - Real-time **in-call chat** panel alongside the video
 
-- JWT Authentication (Signup/Login)
-- User Dashboard to join/create rooms
-- Real-time Video Conferencing
-- Room-based communication
-- WebRTC + Socket.IO integration
+## Key Features
 
-This project demonstrates the integration of authentication with real-time video communication in a full-stack application.
+- **Flexible entry**: Join as a registered user, sign up, or jump in instantly as a guest
+- **JWT Authentication**: Secure Signup/Login flow
+- **Dashboard**: Create or join rooms via a room code/link
+- **Lobby / Pre-call Preview**: Check camera and set your name before entering a call
+- **Real-time Video Conferencing**: Peer-to-peer video/audio via WebRTC
+- **In-call Chat**: Text messaging alongside the video call via Socket.IO
+- **Call Controls**: Mute/unmute mic, enable/disable camera, end call
+- **Meeting History**: View past meetings from the dashboard
+- **Room-based Communication**: Each meeting is scoped to a unique room/URL (e.g. `/meeting_with_jassi`)
+
+## Tech Stack
+
+- **Frontend**: React
+- **Backend**: Node.js, Express
+- **Real-time Signaling**: Socket.IO
+- **Peer Connection**: WebRTC
+- **Auth**: JWT
+
+## Getting Started
+
+```bash
+# Clone the repo
+git clone <repo-url>
+
+# Install dependencies (client & server)
+cd client && npm install
+cd ../server && npm install
+
+# Run the backend
+npm run dev
+
+# Run the frontend
+cd ../client && npm start
+```
+
+> Note: WebRTC requires HTTPS in production. For deployment, the frontend can be hosted on Vercel/Netlify and the backend on Render/Railway.
+
+## Project Status
+
+This project is under active development as a learning exercise in WebRTC signaling (ICE candidate exchange, SDP offer/answer flow) and real-time communication with Socket.IO.

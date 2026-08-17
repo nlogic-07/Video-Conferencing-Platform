@@ -15,13 +15,16 @@ export const connectToServer = (server) => {
   });
   io.on("connection", (socket) => {
     socket.on("join-call", (path) => {
+      //creating room if not exist
       if (connections[path] == undefined) {
         connections[path] = [];
       }
+      //added user
       connections[path].push(socket.id);
 
       timeOnline[socket.id] = new Date();
 
+      //notified all other users
       for (let i = 0; i < connections[path].length; i++) {
         io.to(connections[path][i]).emit(
           "user-joined",
@@ -30,6 +33,7 @@ export const connectToServer = (server) => {
         );
       }
 
+      //sending old messages to new user
       if (messages[path] != undefined) {
         for (let i = 0; i < messages[path].length; i++) {
           io.to(socket.id).emit(
@@ -45,36 +49,6 @@ export const connectToServer = (server) => {
     socket.on("signal", (toId, message) => {
       io.to(toId).emit("signal", socket.id, message);
     });
-
-    // socket.on("chat-message", (data, sender) => {
-    //   const [matchingRoom, found] = Object.entries(connections).reduce(
-    //     ([room, isFound], [roomKey, roomValue]) => {
-    //       if (!isFound && roomValue.includes(socket.id)) {
-    //         return [roomKey, true];
-    //       }
-
-    //       return [room, isFound];
-    //     },
-    //     ["", false],
-    //   );
-
-    //   if (found == true) {
-    //     if (messages[matchingRoom] == undefined) {
-    //       messages[matchingRoom] = [];
-    //     }
-
-    //     messages[matchingRoom].push({
-    //       sender: sender,
-    //       data: data,
-    //       "socket-id-sender": socket.id,
-    //     });
-    //     console.log("message", key, ":", sender, data);
-
-    //     connections[matchingRoom].forEach((elem) => {
-    //       io.to(elem).emit("chat-message", data, sender, socket.id);
-    //     });
-    //   }
-    // });
 
     socket.on("chat-message", (data, sender) => {
       let matchingRoom = "";
@@ -102,33 +76,6 @@ export const connectToServer = (server) => {
         });
       }
     });
-
-    // socket.on("disconnect", () => {
-    //   var diffTime = Math.abs(timeOnline[socket.id] - new Date());
-    //   var key;
-
-    //   for (const [k, v] of JSON.parse(
-    //     JSON.stringify(Object.entries(connections)),
-    //   )) {
-    //     for (let i = 0; i < v.length; ++i) {
-    //       if (v[i] == socket.id) {
-    //         key = k;
-
-    //         for (let i = 0; i < connections[key].length; ++i) {
-    //           io.to(connections[key][i]).emit("user-left", socket.id);
-    //         }
-
-    //         var index = connections[key].indexOf(socket.id);
-
-    //         connections[key].splice(index, 1);
-
-    //         if (connections[key].length == 0) {
-    //           delete connections[key];
-    //         }
-    //       }
-    //     }
-    //   }
-    // });
 
     socket.on("disconnect", () => {
       const joinedTime = timeOnline[socket.id];

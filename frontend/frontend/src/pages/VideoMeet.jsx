@@ -10,14 +10,19 @@ const peerConfigurations = {
 const VideoMeetComponent = () => {
   const socketRef = useRef();
   const socketIdRef = useRef();
+
   const localVideoRef = useRef();
-  const videoRef = useRef([]);
+
+  const [remoteVideos, setVideos] = useState([]);
+  const remoteVideosRef = useRef([]);
 
   const [video, setVideo] = useState([]);
   const [audio, setAudio] = useState();
+  const [screen, setScreen] = useState();
 
   const [userName, setUserName] = useState("");
   const [askForUserName, setAskForUserName] = useState(true);
+
   const [videoAvailable, setVideoAvailable] = useState(false);
   const [audioAvailable, setAudioAvailable] = useState(false);
   const [screenAvailable, setScreenAvailable] = useState();
@@ -33,6 +38,7 @@ const VideoMeetComponent = () => {
     }
   }, [video, audio]);
 
+  //2
   const getPermissions = async () => {
     try {
       const videoPermission = await navigator.mediaDevices.getUserMedia({
@@ -114,10 +120,57 @@ const VideoMeetComponent = () => {
         clients.forEach((socketListId) => {
           connections[socketListId] = new RTCPeerConnection(peerConfigurations);
 
-          //registering event listeners on each peerConn
+          //registering event listeners on each peerConnection
+          connections[socketListId].onicecandidate = (e) => {
+            if (e.candidate != null) {
+              socketRef.current.emit(
+                "signal",
+                socketListId,
+                JSON.stringify({ ice: e.candidate }),
+              );
+            }
+          };
+
+          connections[socketListId].onaddstream = (e) => {};
+
+          //Adding localVideoStream to peerConnection
+          if (window.localStream !== undefined && window.localStream !== null) {
+            connections[socketListId].addStream(window.localStream);
+          } else {
+            let blackSilence = (...args) =>
+              new MediaStream([black(...args), silence()]);
+            window.localStream = blackSilence();
+            connections[socketListId].addStream(window.localStream);
+          }
         });
+
+        if (id === socketIdRef.current) {
+          for (let id2 in connections) {
+            if (id2 === socketIdRef.current) continue;
+          }
+        }
       });
     });
+  };
+
+  const black = ({ width = 640, height = 480 }) => {
+    let canvas = Object.assign(document.createElement("canvas"), {
+      width,
+      height,
+    });
+    canvas.getContext("2d").fillRect(0, 0, width, height);
+
+    let stream = canvas.captureStream();
+    return Object.assign(stream.getVideoTracks()[0], { enabled: false });
+  };
+
+  const silence = () => {
+    let ctx = new AudioContext();
+    let oscillator = ctx.createOscillator();
+    let dst = oscillator.connect(ctx.createMediaStreamDestination());
+    oscillator.start();
+    ctx.resume();
+    return Object.assign(dst.stream.getAudioTracks()[0], { enabled: false });
   };
 
   const getMedia = () => {
@@ -126,7 +179,7 @@ const VideoMeetComponent = () => {
     //this will run first as its sync
     connectToSocketServer();
   };
-  // const getMedia = () => {};
+
   const connect = () => {
     setAskForUserName(false);
     getMedia();

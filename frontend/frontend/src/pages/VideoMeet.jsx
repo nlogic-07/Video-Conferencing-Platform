@@ -8,8 +8,8 @@ const peerConfigurations = {
 };
 
 const VideoMeetComponent = () => {
-  const socketRef = useRef();
-  const socketIdRef = useRef();
+  let socketRef = useRef();
+  let socketIdRef = useRef();
 
   const localVideoRef = useRef();
 
@@ -102,7 +102,41 @@ const VideoMeetComponent = () => {
     }
   };
 
-  const gotMessageFromServer = () => {};
+  const gotMessageFromServer = (fromId, message) => {
+    let signal = JSON.parse(message);
+    if (socketIdRef.current !== fromId) {
+      if (signal.sdp) {
+        connections[fromId]
+          .setRemoteDescription(new RTCSessionDescription(signal.sdp))
+          .then(() => {
+            if (signal.sdp.type === "offer ") {
+              connections[fromId]
+                .createAnswer()
+                .then((description) => {
+                  connections[fromId]
+                    .setLocalDescription(description)
+                    .then(() => {
+                      socketRef.current.emit(
+                        "signal",
+                        fromId,
+                        JSON.stringify({
+                          sdp: connections[fromId].localDescription,
+                        }),
+                      );
+                    })
+                    .catch((e) => console.log(e));
+                })
+                .catch((e) => console.log(e));
+            }
+          });
+      }
+      if (signal.ice) {
+        connections[fromId]
+          .addIceCandidate(new RTCIceCandidate(signal.ice))
+          .catch((e) => console.log(e));
+      }
+    }
+  };
   const addMessage = () => {};
 
   const connectToSocketServer = () => {
@@ -147,6 +181,20 @@ const VideoMeetComponent = () => {
         if (id === socketIdRef.current) {
           for (let id2 in connections) {
             if (id2 === socketIdRef.current) continue;
+
+            try {
+              connections[id2].addStream(window.localStream);
+            } catch (e) {}
+
+            connections[id2].createOffer().then((description) => {
+              connections[id2].setLocalDescription(description).then(() => {
+                socketRef.current.emit(
+                  "signal",
+                  id2,
+                  JSON.stringify({ sdp: connections[id2].localDescription }),
+                );
+              });
+            });
           }
         }
       });

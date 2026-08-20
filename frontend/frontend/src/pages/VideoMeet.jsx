@@ -13,7 +13,7 @@ const VideoMeetComponent = () => {
 
   const localVideoRef = useRef();
 
-  const [remoteVideos, setVideos] = useState([]);
+  const [remoteVideos, setRemoteVideos] = useState([]);
   const remoteVideosRef = useRef([]);
 
   const [video, setVideo] = useState([]);
@@ -165,7 +165,34 @@ const VideoMeetComponent = () => {
             }
           };
 
-          connections[socketListId].onaddstream = (e) => {};
+          connections[socketListId].onaddstream = (e) => {
+            let videoExists = remoteVideosRef.current.find(
+              (remoteVideo) => remoteVideo.socketId === socketListId,
+            );
+            if (videoExists) {
+              setRemoteVideos((remoteVideos) => {
+                const updateRemoteVideos = remoteVideos.map((remoteVideo) =>
+                  remoteVideo.socketId === socketListId
+                    ? { ...remoteVideo, stream: e.stream }
+                    : remoteVideo,
+                );
+                remoteVideosRef.current = updateRemoteVideos;
+                return updateRemoteVideos;
+              });
+            } else {
+              let newRemoteVideo = {
+                socketId: socketListId,
+                stream: e.stream,
+                autoplay: true,
+                playsinline: true,
+              };
+              setRemoteVideos((remoteVideos) => {
+                const updatedRemoteVideos = [...remoteVideos, newRemoteVideo];
+                remoteVideosRef.current = updatedRemoteVideos;
+                return updatedRemoteVideos;
+              });
+            }
+          };
 
           //Adding localVideoStream to peerConnection
           if (window.localStream !== undefined && window.localStream !== null) {

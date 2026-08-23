@@ -1,6 +1,17 @@
 import React, { useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
 
+import { IconButton, Badge } from "@mui/material";
+import VideocamIcon from "@mui/icons-material/Videocam";
+import VideocamOffIcon from "@mui/icons-material/VideocamOff";
+import styles from "../styles/videoComponent.module.css";
+import CallEndIcon from "@mui/icons-material/CallEnd";
+import MicIcon from "@mui/icons-material/Mic";
+import MicOffIcon from "@mui/icons-material/MicOff";
+import ScreenShareIcon from "@mui/icons-material/ScreenShare";
+import StopScreenShareIcon from "@mui/icons-material/StopScreenShare";
+import ChatIcon from "@mui/icons-material/Chat";
+
 const connections = {};
 
 const peerConfigurations = {
@@ -8,7 +19,7 @@ const peerConfigurations = {
 };
 
 const VideoMeetComponent = () => {
-  let socketRef = useRef();
+  var socketRef = useRef();
   let socketIdRef = useRef();
 
   const localVideoRef = useRef();
@@ -22,6 +33,11 @@ const VideoMeetComponent = () => {
 
   const [userName, setUserName] = useState("");
   const [askForUserName, setAskForUserName] = useState(true);
+
+  let [showModal, setModal] = useState(true);
+  let [messages, setMessages] = useState([]);
+  let [message, setMessage] = useState("");
+  let [newMessages, setNewMessages] = useState(3);
 
   const [videoAvailable, setVideoAvailable] = useState(false);
   const [audioAvailable, setAudioAvailable] = useState(false);
@@ -99,6 +115,11 @@ const VideoMeetComponent = () => {
         .catch((e) => console.log(e));
     } else {
       //    hold on
+
+      try {
+        let tracks = localVideoRef.current.srcObject.getTracks();
+        tracks.forEach((track) => track.stop());
+      } catch (e) {}
     }
   };
 
@@ -109,7 +130,7 @@ const VideoMeetComponent = () => {
         connections[fromId]
           .setRemoteDescription(new RTCSessionDescription(signal.sdp))
           .then(() => {
-            if (signal.sdp.type === "offer ") {
+            if (signal.sdp.type === "offer") {
               connections[fromId]
                 .createAnswer()
                 .then((description) => {
@@ -140,12 +161,12 @@ const VideoMeetComponent = () => {
   const addMessage = () => {};
 
   const connectToSocketServer = () => {
-    socketRef.current = io.connect("http://localhost:9000");
+    socketRef.current = io.connect("http://localhost:9000", { secure: false });
 
     socketRef.current.on("signal", gotMessageFromServer);
     socketRef.current.on("connect", () => {
       socketRef.current.emit("join-call", window.location.href); //for now see this
-      socketIdRef = socketRef.current.id;
+      socketIdRef.current = socketRef.current.id;
 
       socketRef.current.on("chat-message", addMessage);
       socketRef.current.on("user-left", (id) => {});
@@ -260,6 +281,11 @@ const VideoMeetComponent = () => {
     getMedia();
   };
 
+  const handleVideo = () => {};
+  const handleAudio = () => {};
+  const handleScreen = () => {};
+  const handleEndCall = () => {};
+
   return (
     <div>
       {askForUserName === true ? (
@@ -289,10 +315,75 @@ const VideoMeetComponent = () => {
           </div>
         </div>
       ) : (
-        <div>
-          <h1>Meeting UI</h1>
-          <h1>Username : {userName} </h1>
-          <video ref={localVideoRef} autoPlay muted></video>
+        <div className={styles.meetVideoContainer}>
+          <div className={styles.buttonContainers}>
+            <IconButton onClick={handleVideo} style={{ color: "white" }}>
+              {video === true ? <VideocamIcon /> : <VideocamOffIcon />}
+            </IconButton>
+            <IconButton
+              onClick={handleEndCall}
+              sx={{
+                backgroundColor: "#ef4444",
+                color: "white",
+                "&:hover": {
+                  backgroundColor: "#dc2626",
+                },
+              }}
+            >
+              <CallEndIcon />
+            </IconButton>
+            <IconButton onClick={handleAudio} style={{ color: "white" }}>
+              {audio === true ? <MicIcon /> : <MicOffIcon />}
+            </IconButton>
+
+            {screenAvailable === true ? (
+              <IconButton onClick={handleScreen} style={{ color: "white" }}>
+                {screen === true ? (
+                  <ScreenShareIcon />
+                ) : (
+                  <StopScreenShareIcon />
+                )}
+              </IconButton>
+            ) : (
+              <></>
+            )}
+
+            <Badge badgeContent={newMessages} max={999} color="orange">
+              <IconButton
+                onClick={() => setModal(!showModal)}
+                style={{ color: "white" }}
+              >
+                <ChatIcon />{" "}
+              </IconButton>
+            </Badge>
+          </div>
+
+          <video
+            className={styles.meetUserVideo}
+            ref={localVideoRef}
+            autoPlay
+            muted
+          ></video>
+
+          <div className={styles.conferenceView}>
+            {remoteVideos.map((remoteVideo) => (
+              <div key={remoteVideo.socketId} className={styles.videoCard}>
+                <video
+                  data-socket={remoteVideo.socketId}
+                  ref={(ref) => {
+                    if (ref && remoteVideo.stream) {
+                      ref.srcObject = remoteVideo.stream;
+                    }
+                  }}
+                  autoPlay
+                ></video>
+
+                <div className={styles.userTag}>
+                  {remoteVideo.socketId.slice(0, 5)}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>

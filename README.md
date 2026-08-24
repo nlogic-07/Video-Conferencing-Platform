@@ -10,7 +10,8 @@ A full-stack video conferencing web application with secure authentication and r
 4. **Lobby Page** – Pre-call screen ("Enter into Lobby") where the user sets a display name and previews their camera before connecting.
 5. **Meeting Room** – Live video call screen with:
    - Local + remote video feeds
-   - Call controls (camera toggle, mic toggle, end call)
+   - Call controls (camera toggle, mic toggle, screen share, end call)
+   - **Screen sharing** — swap your camera feed for your screen mid-call
    - Real-time **in-call chat** panel alongside the video
 
 ## Key Features
@@ -22,6 +23,7 @@ A full-stack video conferencing web application with secure authentication and r
 - **Real-time Video Conferencing**: Peer-to-peer video/audio via WebRTC
 - **In-call Chat**: Text messaging alongside the video call via Socket.IO
 - **Call Controls**: Mute/unmute mic, enable/disable camera, end call
+- **Screen Sharing**: Share your screen with other participants mid-call
 - **Meeting History**: View past meetings from the dashboard
 - **Room-based Communication**: Each meeting is scoped to a unique room/URL (e.g. `/meeting_with_jassi`)
 
@@ -32,25 +34,6 @@ A full-stack video conferencing web application with secure authentication and r
 - **Real-time Signaling**: Socket.IO
 - **Peer Connection**: WebRTC
 - **Auth**: JWT
-
-## Getting Started
-
-```bash
-# Clone the repo
-git clone <repo-url>
-
-# Install dependencies (client & server)
-cd client && npm install
-cd ../server && npm install
-
-# Run the backend
-npm run dev
-
-# Run the frontend
-cd ../client && npm start
-```
-
-> Note: WebRTC requires HTTPS in production. For deployment, the frontend can be hosted on Vercel/Netlify and the backend on Render/Railway.
 
 ## Project Status
 

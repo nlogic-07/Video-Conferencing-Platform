@@ -105,6 +105,65 @@ const VideoMeetComponent = () => {
     }
     window.localStream = stream;
     localVideoRef.current.srcObject = stream;
+
+    //renegotiation if mediaStream changes
+    for (let id in connections) {
+      if (id === socketIdRef.current) continue;
+      connections[id].addStream(window.localStream);
+
+      connections[id].createOffer().then((description) => {
+        console.log(description);
+        connections[id]
+          .setLocalDescription(description)
+          .then(() => {
+            socketRef.current.emit(
+              "signal",
+              id,
+              JSON.stringify({ sdp: connections[id].localDescription }),
+            );
+          })
+          .catch((e) => console.log(e));
+      });
+    }
+
+    //handling when streams gets ended unexpectedly
+    stream.getTracks().forEach(
+      (track) =>
+        (track.onended = () => {
+          setVideo(false);
+          setAudio(false);
+
+          try {
+            let tracks = localVideoRef.current.srcObject.getTracks();
+            tracks.forEach((track) => track.stop());
+          } catch (e) {
+            console.log(e);
+          }
+
+          let blackSilence = (...args) =>
+            new MediaStream([black(...args), silence()]);
+
+          window.localStream = blackSilence();
+          localVideoRef.current.srcObject = window.localStream;
+
+          for (let id in connections) {
+            connections[id].addStream(window.localStream);
+
+            connections[id].createOffer().then((description) => {
+              connections[id]
+                .setLocalDescription(description)
+                .then(() => {
+                  socketRef.current.emit(
+                    "signal",
+                    id,
+                    JSON.stringify({ sdp: connections[id].localDescription }),
+                  );
+                })
+                .catch((e) => console.log(e));
+            });
+          }
+        }),
+    );
   };
 
   const getUserMedia = () => {
@@ -158,7 +217,6 @@ const VideoMeetComponent = () => {
       }
     }
   };
-  const addMessage = () => {};
 
   const connectToSocketServer = () => {
     socketRef.current = io.connect("http://localhost:9000", { secure: false });
@@ -187,6 +245,7 @@ const VideoMeetComponent = () => {
           };
 
           connections[socketListId].onaddstream = (e) => {
+            console.log("STREAM RECEIVED FROM", socketListId, e.stream);
             let videoExists = remoteVideosRef.current.find(
               (remoteVideo) => remoteVideo.socketId === socketListId,
             );
@@ -281,10 +340,26 @@ const VideoMeetComponent = () => {
     getMedia();
   };
 
-  const handleVideo = () => {};
-  const handleAudio = () => {};
-  const handleScreen = () => {};
+  const handleVideo = () => {
+    setVideo(!video);
+  };
+  const handleAudio = () => {
+    setAudio(!audio);
+  };
+  const handleScreen = () => {
+    setScreen(!screen);
+  };
   const handleEndCall = () => {};
+
+  const openChat = () => {};
+
+  const closeChat = () => {};
+
+  const handleMessage = () => {};
+
+  const addMessage = () => {};
+
+  const sendMessage = () => {};
 
   return (
     <div>
@@ -320,18 +395,7 @@ const VideoMeetComponent = () => {
             <IconButton onClick={handleVideo} style={{ color: "white" }}>
               {video === true ? <VideocamIcon /> : <VideocamOffIcon />}
             </IconButton>
-            <IconButton
-              onClick={handleEndCall}
-              sx={{
-                backgroundColor: "#ef4444",
-                color: "white",
-                "&:hover": {
-                  backgroundColor: "#dc2626",
-                },
-              }}
-            >
-              <CallEndIcon />
-            </IconButton>
+
             <IconButton onClick={handleAudio} style={{ color: "white" }}>
               {audio === true ? <MicIcon /> : <MicOffIcon />}
             </IconButton>
@@ -356,6 +420,18 @@ const VideoMeetComponent = () => {
                 <ChatIcon />{" "}
               </IconButton>
             </Badge>
+            <IconButton
+              onClick={handleEndCall}
+              sx={{
+                backgroundColor: "#ef4444",
+                color: "white",
+                "&:hover": {
+                  backgroundColor: "#dc2626",
+                },
+              }}
+            >
+              <CallEndIcon />
+            </IconButton>
           </div>
 
           <video

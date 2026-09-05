@@ -37,7 +37,7 @@ const VideoMeetComponent = () => {
   let [showModal, setModal] = useState(true);
   let [messages, setMessages] = useState([]);
   let [message, setMessage] = useState("");
-  let [newMessages, setNewMessages] = useState(3);
+  let [newMessages, setNewMessages] = useState();
 
   const [videoAvailable, setVideoAvailable] = useState(false);
   const [audioAvailable, setAudioAvailable] = useState(false);
@@ -78,7 +78,7 @@ const VideoMeetComponent = () => {
       console.log(e);
     }
     window.localStream = stream;
-    localVideoref.current.srcObject = stream;
+    localVideoRef.current.srcObject = stream;
 
     for (let id in connections) {
       if (id === socketIdRef.current) continue;
@@ -105,7 +105,7 @@ const VideoMeetComponent = () => {
           setScreen(false);
 
           try {
-            let tracks = localVideoref.current.srcObject.getTracks();
+            let tracks = localVideoRef.current.srcObject.getTracks();
             tracks.forEach((track) => track.stop());
           } catch (e) {
             console.log(e);
@@ -114,7 +114,7 @@ const VideoMeetComponent = () => {
           let blackSilence = (...args) =>
             new MediaStream([black(...args), silence()]);
           window.localStream = blackSilence();
-          localVideoref.current.srcObject = window.localStream;
+          localVideoRef.current.srcObject = window.localStream;
 
           getUserMedia();
         }),
@@ -380,7 +380,7 @@ const VideoMeetComponent = () => {
     });
   };
 
-  const black = ({ width = 640, height = 480 }) => {
+  const black = ({ width = 640, height = 480 } = {}) => {
     let canvas = Object.assign(document.createElement("canvas"), {
       width,
       height,

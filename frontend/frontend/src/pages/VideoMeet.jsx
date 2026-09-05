@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
 
-import { IconButton, Badge } from "@mui/material";
+import { IconButton, Badge, TextField, Button } from "@mui/material";
 import VideocamIcon from "@mui/icons-material/Videocam";
 import VideocamOffIcon from "@mui/icons-material/VideocamOff";
 import styles from "../styles/videoComponent.module.css";
@@ -421,17 +421,38 @@ const VideoMeetComponent = () => {
   const handleScreen = () => {
     setScreen(!screen);
   };
+
   const handleEndCall = () => {};
 
-  const openChat = () => {};
+  const openChat = () => {
+    setModal(true);
+    setNewMessages(0);
+  };
 
-  const closeChat = () => {};
+  const closeChat = () => {
+    setModal(false);
+  };
 
   const handleMessage = () => {};
 
-  const addMessage = () => {};
+  const addMessage = (data, sender, socketIdSender) => {
+    setMessages((prevMessages) => [
+      ...prevMessages,
+      {
+        sender: sender,
+        data: data,
+      },
+    ]);
 
-  const sendMessage = () => {};
+    if (socketIdSender !== socketIdRef.current) {
+      setNewMessages((prevNewMessages) => prevNewMessages + 1);
+    }
+  };
+
+  const sendMessage = () => {
+    socketRef.current.emit("chat-message", message, userName);
+    setMessage("");
+  };
 
   return (
     <div>
@@ -463,6 +484,42 @@ const VideoMeetComponent = () => {
         </div>
       ) : (
         <div className={styles.meetVideoContainer}>
+          {showModal ? (
+            <div className={styles.chatRoom}>
+              <div className={styles.chatContainer}>
+                <h1>Chat</h1>
+                <div className={styles.chattingDisplay}>
+                  {messages.length !== 0 ? (
+                    messages.map((item, index) => {
+                      return (
+                        <div style={{ marginBottom: "20px" }} key={index}>
+                          <p style={{ fontWeight: "bold" }}>{item.sender}</p>
+                          <p>{item.data}</p>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <p>No messages yet!!</p>
+                  )}
+                </div>
+
+                <div className={styles.chattingArea}>
+                  <TextField
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    id="outlined-basic"
+                    label="Enter Your chat"
+                    variant="outlined"
+                  />
+                  <Button variant="contained" onClick={sendMessage}>
+                    Send
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <></>
+          )}
           <div className={styles.buttonContainers}>
             <IconButton onClick={handleVideo} style={{ color: "white" }}>
               {video === true ? <VideocamIcon /> : <VideocamOffIcon />}

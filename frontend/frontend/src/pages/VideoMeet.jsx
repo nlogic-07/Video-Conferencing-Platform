@@ -34,7 +34,7 @@ const VideoMeetComponent = () => {
   const [userName, setUserName] = useState("");
   const [askForUserName, setAskForUserName] = useState(true);
 
-  let [showModal, setModal] = useState(true);
+  let [showModal, setModal] = useState(false);
   let [messages, setMessages] = useState([]);
   let [message, setMessage] = useState("");
   let [newMessages, setNewMessages] = useState();
@@ -422,7 +422,13 @@ const VideoMeetComponent = () => {
     setScreen(!screen);
   };
 
-  const handleEndCall = () => {};
+  const handleEndCall = () => {
+    try {
+      let tracks = localVideoref.current.srcObject.getTracks();
+      tracks.forEach((track) => track.stop());
+    } catch (e) {}
+    window.location.href = "/home";
+  };
 
   const openChat = () => {
     setModal(true);
@@ -487,29 +493,68 @@ const VideoMeetComponent = () => {
           {showModal ? (
             <div className={styles.chatRoom}>
               <div className={styles.chatContainer}>
-                <h1>Chat</h1>
+                <div className={styles.chatHeader}>
+                  <h2>Chat</h2>
+                  <span>{messages.length} messages</span>
+                </div>
+
                 <div className={styles.chattingDisplay}>
                   {messages.length !== 0 ? (
-                    messages.map((item, index) => {
-                      return (
-                        <div style={{ marginBottom: "20px" }} key={index}>
-                          <p style={{ fontWeight: "bold" }}>{item.sender}</p>
-                          <p>{item.data}</p>
-                        </div>
-                      );
-                    })
+                    messages.map((item, index) => (
+                      <div
+                        key={index}
+                        className={`${styles.messageBubble} ${
+                          item.sender === userName
+                            ? styles.myMessage
+                            : styles.otherMessage
+                        }`}
+                      >
+                        <span className={styles.sender}>{item.sender}</span>
+                        <p>{item.data}</p>
+                      </div>
+                    ))
                   ) : (
-                    <p>No messages yet!!</p>
+                    <div className={styles.emptyChat}>No messages yet 👋</div>
                   )}
                 </div>
 
                 <div className={styles.chattingArea}>
                   <TextField
+                    fullWidth
+                    size="small"
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
-                    id="outlined-basic"
-                    label="Enter Your chat"
+                    placeholder="Type a message..."
                     variant="outlined"
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        borderRadius: "14px",
+                        backgroundColor: "rgba(255,255,255,0.06)",
+                        color: "#fff",
+
+                        "& fieldset": {
+                          borderColor: "rgba(255,255,255,0.1)",
+                        },
+
+                        "&:hover fieldset": {
+                          borderColor: "#3b82f6",
+                        },
+
+                        "&.Mui-focused fieldset": {
+                          borderColor: "#3b82f6",
+                        },
+                      },
+
+                      "& input": {
+                        color: "#fff",
+                        padding: "12px 14px",
+                      },
+
+                      "& input::placeholder": {
+                        color: "#94a3b8",
+                        opacity: 1,
+                      },
+                    }}
                   />
                   <Button variant="contained" onClick={sendMessage}>
                     Send

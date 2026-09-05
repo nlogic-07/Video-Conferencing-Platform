@@ -214,3 +214,11 @@
 
   font-size: 14px;
 }
+
+.videoShifted {
+  right: 405px;
+}
+
+.conferenceWithChat {
+  margin-right: 380px;
+}

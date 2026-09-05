@@ -299,7 +299,11 @@ const VideoMeetComponent = () => {
       socketIdRef.current = socketRef.current.id;
 
       socketRef.current.on("chat-message", addMessage);
-      socketRef.current.on("user-left", (id) => {});
+      socketRef.current.on("user-left", (id) => {
+        setRemoteVideos((videos) =>
+          videos.filter((video) => video.socketId !== id),
+        );
+      });
 
       socketRef.current.on("user-joined", (id, clients) => {
         clients.forEach((socketListId) => {
@@ -424,7 +428,7 @@ const VideoMeetComponent = () => {
 
   const handleEndCall = () => {
     try {
-      let tracks = localVideoref.current.srcObject.getTracks();
+      let tracks = localVideoRef.current.srcObject.getTracks();
       tracks.forEach((track) => track.stop());
     } catch (e) {}
     window.location.href = "/home";
@@ -609,13 +613,19 @@ const VideoMeetComponent = () => {
           </div>
 
           <video
-            className={styles.meetUserVideo}
+            className={`${styles.meetUserVideo} ${
+              showModal ? styles.videoShifted : ""
+            }`}
             ref={localVideoRef}
             autoPlay
             muted
-          ></video>
+          />
 
-          <div className={styles.conferenceView}>
+          <div
+            className={`${styles.conferenceView} ${
+              showModal ? styles.conferenceWithChat : ""
+            }`}
+          >
             {remoteVideos.map((remoteVideo) => (
               <div key={remoteVideo.socketId} className={styles.videoCard}>
                 <video
